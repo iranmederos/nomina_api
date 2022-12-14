@@ -19,7 +19,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(max_length=100, unique=True)
     status = models.BooleanField(default=True)
     date_start = models.DateField(null=True, blank=True)
-    rol = models.ForeignKey(Roles, on_delete=models.PROTECT, null=True, blank=True) 
+    rol = models.ForeignKey(Roles, on_delete=models.DO_NOTHING, null=True, blank=True) 
 
     USERNAME_FIELD ='code_employee'
     REQUIRED_FIELDS = ['username', 'password']
