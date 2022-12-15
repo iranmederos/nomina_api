@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     #Applications
     'authentication',
     'payroll',
-    'rest_framework'
+    #django external apps
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
