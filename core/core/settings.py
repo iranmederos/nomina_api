@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     #Applications
     'authentication',
     'payroll',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
