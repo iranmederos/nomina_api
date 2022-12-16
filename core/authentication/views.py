@@ -34,22 +34,21 @@ class LoginView(GenericAPIView):
                         "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
                         "message": LOGIN_OK
                     }, status=status.HTTP_200_OK)
-                # else:
                 token.delete()
                 token = Token.objects.create(user=user)
                 return Response( {
-                    "token": token[0].key,#token.key,
+                    "token": token[0].key,
                     "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
                     "message": LOGIN_OK
                 }, status=status.HTTP_200_OK)
-
+ 
             else:
                 return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
 
+# @permission_classes([IsAuthenticated])
 class LogoutView(GenericAPIView):
     def post(self, request):
-        try:
-            token_request = request.data.get("token", None)
+            token_request = request.headers.get('token', None)
             token = Token.objects.filter(key=token_request).first()
             if token: 
                 user = CustomUser.objects.filter(auth_token=token).first()
@@ -57,8 +56,6 @@ class LogoutView(GenericAPIView):
                 logout(request)
                 return Response({"msg": "Sesion finalizada"},status=status.HTTP_200_OK)
             return Response({"Error":"Ocurrio un error"}, status=status.HTTP_400_BAD_REQUEST)      
-        except:
-            return Response({"Error:":"No se encuentra ningun usuario con esas credenciales"}, status=status.HTTP_409_CONFLICT)
 
 
 
