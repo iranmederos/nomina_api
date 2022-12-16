@@ -26,7 +26,7 @@ class LoginView(GenericAPIView):
             return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST)
         else: 
             user = authenticate(code_employee = code_employee, password = password)
-            if user is not None and user.is_active:
+            if user is not None and user.status == True:#user.is_active:
                 token = Token.objects.get_or_create(user=user)
                 if token:
                     return Response( {
@@ -71,6 +71,21 @@ class SignUpView(GenericAPIView):
                 "message": SIGNUP_OK
             },
         )
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def disableUser(request, user_id):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        user.status = False
+        UserSerializer(user, many=False)
+        user.save()
+        data = {
+            "message": "Usuario deshabilitado exitosamente",
+        }
+        return Response(data, status = 200)
+    except:
+        return Response({"msg": "No existe ningun usuario con ese ID"}, status = 404)
 
 
 @api_view(['GET'])
