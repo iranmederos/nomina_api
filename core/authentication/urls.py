@@ -1,16 +1,10 @@
 from django.urls import path, include
-from .views import mensaje, Login, Logout
-# from rest_framework_simplejwt.views import TokenObtainPairView
+from .views import mensaje, LoginView, LogoutView, SignUpView
 
 urlpatterns = [
     # Auth views
-    # path('auth/login/', LoginView.as_view(), name='auth_login'),
-    path('login/', Login.as_view(), name='auth_login'),
-    # path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
-    path('logout/', Logout.as_view(), name='auth_logout'),
-
-
-    #  path('users/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-
-     path('users/test/', mensaje),
+    path('login/', LoginView.as_view(), name='auth_login'),
+    path('logout/', LogoutView.as_view(), name='auth_logout'),
+    path('signup/', SignUpView.as_view()),
+    path('users/test/', mensaje),
 ]
