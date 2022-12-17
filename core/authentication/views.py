@@ -49,7 +49,7 @@ class LoginView(GenericAPIView):
 class LogoutView(GenericAPIView):
     def post(self, request):
             token_request = request.headers.get('token', None)
-            token = Token.objects.filter(key=token_request).first()
+            token = Token.objects.get(key=token_request)
             if token: 
                 user = CustomUser.objects.filter(auth_token=token).first()
                 user.auth_token.delete()
@@ -86,6 +86,30 @@ def disableUser(request, user_id):
         return Response(data, status = 200)
     except:
         return Response({"msg": "No existe ningun usuario con ese ID"}, status = 404)
+
+
+@api_view(['PUT'])
+def updateUser(request, user_id):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        user.identification_card = request.data.get("identification_card", None)
+        user.rfc_equivalet = request.data.get("rfc_equivalet", None)
+        user.nss = request.data.get("nss", None)
+        user.first_name = request.data.get("first_name", None)
+        user.last_name = request.data.get("last_name", None)
+        user.email = request.data.get("email", None)
+        serializer = UserSerializer(user, many=False)
+        user.save()
+        return Response(serializer.data)
+    except:
+        return Response({"msg": "Ocurrio un error"}, status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def getUsers(request):
+    users = CustomUser.objects.all()
+    serializer = CustomUserSerializer(users, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['GET'])

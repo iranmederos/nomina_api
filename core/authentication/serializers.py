@@ -25,6 +25,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('id', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol', 'password')
 
     def create(self, validated_data):
+        #tomar del modelo roles el campo de usuario comun
         user = CustomUser.objects.create_user(
             username = validated_data['code_employee'],
             code_employee = validated_data['code_employee'],
