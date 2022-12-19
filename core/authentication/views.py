@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework import status
 from rest_framework.response import Response
 # from rest_framework.views import APIView
@@ -48,6 +49,7 @@ class LoginView(GenericAPIView):
 # @permission_classes([IsAuthenticated])
 class LogoutView(GenericAPIView):
     def post(self, request):
+        try:
             token_request = request.headers.get('token', None)
             token = Token.objects.get(key=token_request)
             if token: 
@@ -55,7 +57,10 @@ class LogoutView(GenericAPIView):
                 user.auth_token.delete()
                 logout(request)
                 return Response({"msg": "Sesion finalizada"},status=status.HTTP_200_OK)
-            return Response({"Error":"Ocurrio un error"}, status=status.HTTP_400_BAD_REQUEST)      
+            return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
+        except:
+            return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
+
 
 
 
@@ -85,10 +90,11 @@ def disableUser(request, user_id):
         }
         return Response(data, status = 200)
     except:
-        return Response({"msg": "No existe ningun usuario con ese ID"}, status = 404)
+        return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
 
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def updateUser(request, user_id):
     try:
         user = CustomUser.objects.get(id=user_id)
@@ -102,14 +108,48 @@ def updateUser(request, user_id):
         user.save()
         return Response(serializer.data)
     except:
-        return Response({"msg": "Ocurrio un error"}, status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No existe un usuario con ese id"}, status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getUsers(request):
     users = CustomUser.objects.all()
     serializer = CustomUserSerializer(users, many=True)
     return Response(serializer.data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def changePassword(request, user_id):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        current_password = request.data.get("current_password", None)
+        new_password = request.data.get("new_password", None)
+        confirm_password = request.data.get("confirm_password", None)
+
+        if current_password is None or new_password is None or confirm_password is None:
+            return Response({"error": "Todos los datos son obligatorios"}, status.HTTP_400_BAD_REQUEST)
+
+        current_password_is_correct=check_password(current_password, user.password)
+        if current_password_is_correct:
+            if new_password == confirm_password:
+                user.password = make_password(new_password)
+                user.save()
+                serializer = UserSerializer(user, many=False)
+                return Response({
+                    "user": serializer.data,
+                    "msg": "El password ha sido cambiado exitosamente"
+                })
+            return Response({"error": "Las contraseñas no coinciden"}, status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+                "current_password": current_password,
+                "user.password": user.password,
+                "error": "La contraseña actual es incorrecta"
+                }, status.HTTP_400_BAD_REQUEST)
+    except: 
+        return Response({"error": "No existe un usuario con ese id"}, status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

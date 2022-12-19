@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import mensaje, LoginView, LogoutView, SignUpView, disableUser, getUsers, updateUser
+from .views import mensaje, LoginView, LogoutView, SignUpView, disableUser, getUsers, updateUser, changePassword
 
 urlpatterns = [
     # Auth views
@@ -9,5 +9,6 @@ urlpatterns = [
     path('signup/', SignUpView.as_view()),
     path('get-users/', getUsers),
     path('update-user/<int:user_id>/', updateUser),
+    path('change-password/<int:user_id>/', changePassword),
     path('users/test/', mensaje),
 ]

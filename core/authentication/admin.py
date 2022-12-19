@@ -8,7 +8,7 @@ from .models import CustomUser, Roles
 
 # Register your models here.
 class CustomUserAdmin(UserAdmin, admin.ModelAdmin):
-    list_display = ('id', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol')
+    list_display = ('id', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol', 'password')
         
 admin.site.register(CustomUser, CustomUserAdmin) #CustomUser es un modelo y CustomUserAdmin es la vista a mostrar del modelo 
 admin.site.register(Roles)
