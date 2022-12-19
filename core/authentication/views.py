@@ -13,6 +13,10 @@ from .serializers import UserSerializer, CustomUserSerializer, RegisterSerialize
 from .messages.responses_ok import LOGIN_OK, SIGNUP_OK
 from .messages.responses_error import LOGIN_CREDENTIALS_REQUIRED_ERROR, LOGIN_CREDENTIALS_ERROR
 
+from django.core.mail import send_mail
+from django.conf import settings
+
+
 # Create your views here.
 class LoginView(GenericAPIView):
     def get(self, request):
@@ -152,7 +156,31 @@ def changePassword(request, user_id):
         return Response({"error": "No existe un usuario con ese id"}, status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST']) 
+def send_mail_message(request):
+    send_mail( 
+        '',# 'Subject here',
+        'Este es un email de prueba, enviado mediante django',# 'Here is the message.',
+        settings.EMAIL_HOST_USER,# 'from@example.com',
+        ['sigma4726spring@gmail.com'],# ['to@example.com'],
+        fail_silently=False,
+    )
+    return Response({"msg":"Email enviado exitosamente"})
+
+
+# @api_view(['POST']) 
+# def send_mail_message(request):
+#     send_mail( 
+#         'Mensaje de prueba',# 'Subject here',
+#         'Este es un email de prueba, enviado mediante django',# 'Here is the message.',
+#         settings.EMAIL_HOST_USER,# 'from@example.com',
+#         ['sigma4726spring@gmail.com'],# ['to@example.com'],
+#         fail_silently=False,
+#     )
+#     return Response({"msg":"Email enviado exitosamente"})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mensaje(request):
-     return Response({"msg":"Hola Mundo"})
+    return Response({"msg":"Hola Mundo"})

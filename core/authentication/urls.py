@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import mensaje, LoginView, LogoutView, SignUpView, disableUser, getUsers, updateUser, changePassword
+from .views import mensaje, LoginView, LogoutView, SignUpView, disableUser, getUsers, updateUser, changePassword, send_mail_message
 
 urlpatterns = [
     # Auth views
@@ -10,5 +10,7 @@ urlpatterns = [
     path('get-users/', getUsers),
     path('update-user/<int:user_id>/', updateUser),
     path('change-password/<int:user_id>/', changePassword),
+    path('send-mail-message/', send_mail_message),
+
     path('users/test/', mensaje),
 ]

@@ -64,6 +64,13 @@ REST_FRAMEWORK = {
     # ]
 }
 
+EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = 'smtp.ionos.mx'#'smtp.gmail.com'
+EMAIL_HOST_USER = 'roman.martinez@syncronik.team' #your email-id
+EMAIL_HOST_PASSWORD = '9PhaZ852kUG.cQw' #your password
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 
 
 ROOT_URLCONF = 'core.urls'
