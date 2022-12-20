@@ -181,10 +181,10 @@ def request_recovery_password(request):
                 "msg": message
             })
         except: 
-            return Response({"error":"El email no se envió correctamente, por favor, vuelva a ingresar su dirección de correo electrónico"})
+            return Response({"error":"El email no se envió correctamente, por favor, vuelva a ingresar su dirección de correo electrónico"}, status=400)
 
     except:
-        return Response({"error":"El email no corresponde a ningún usuario registrado"})
+        return Response({"error":"El email no corresponde a ningún usuario registrado"}, status=400)
 
 
 
