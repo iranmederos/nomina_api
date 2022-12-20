@@ -56,7 +56,8 @@ class LoginView(GenericAPIView):
             if email is None or password is None:
                 return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST)
             else: 
-                user = authenticate(email = email, password = password)
+                user = CustomUser.objects.get(email=email)
+                user = authenticate(code_employee = user.code_employee, password = password)
                 if user is not None and user.status == True:#user.is_active:
                     token = Token.objects.get_or_create(user=user)
                     if token:
