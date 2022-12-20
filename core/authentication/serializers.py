@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser
+from django.core.validators import RegexValidator, MinLengthValidator
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,10 +9,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-     class Meta:
-         model = CustomUser
-         fields = "__all__"
-
+    class Meta:
+        model = CustomUser
+        fields = "__all__" 
 
 # class UserTokenSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -20,6 +20,16 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        validators=[
+            RegexValidator(
+                regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\W_])',
+                message='El password debe tener al menos un número, una letra mayúscula, una letra minúscula y un signo de puntuación',
+            ),
+            MinLengthValidator(8, 'El password debe tener al menos 8 caracteres'),
+        ]
+    )
+
     class Meta:
         model = CustomUser
         fields = ('id', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol', 'password')
