@@ -83,7 +83,7 @@ class LoginView(GenericAPIView):
         else:
             return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST) 
 
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 class LogoutView(GenericAPIView):
     def post(self, request):
         try:
@@ -99,35 +99,55 @@ class LogoutView(GenericAPIView):
             return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
 
 
-
+@permission_classes([IsAuthenticated])
 class SignUpView(GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response(
-            {
-                "user": UserSerializer(user, context = self.get_serializer_context()).data,
-                "message": SIGNUP_OK
-            },
-        )
+        token_request = request.headers.get("token", None)
+        if token_request is not None:
+            # token = Token.objects.get(key=token_request)
+            token = Token.objects.filter(key=token_request).first()
+            if token:
+                log_user = CustomUser.objects.filter(auth_token=token).first()
+                if log_user.rol.id == 1:
+                    serializer = self.get_serializer(data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    user = serializer.save()
+                    return Response(
+                        {
+                            "user": UserSerializer(user, context = self.get_serializer_context()).data,
+                            "message": SIGNUP_OK
+                        },
+                    )
+                return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+        return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)   
 
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def disable_user(request, user_id):
-    try:
-        user = CustomUser.objects.get(id=user_id)
-        user.status = False
-        UserSerializer(user, many=False)
-        user.save()
-        data = {
-            "message": "Usuario deshabilitado exitosamente",
-        }
-        return Response(data, status = 200)
-    except:
-        return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                try:
+                    user = CustomUser.objects.get(id=user_id)
+                    user.status = False
+                    UserSerializer(user, many=False)
+                    user.save()
+                    data = {
+                        "message": "Usuario deshabilitado exitosamente",
+                    }
+                    return Response(data, status = 200)
+                except:
+                    return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
 
 
 @api_view(['PUT'])
@@ -147,9 +167,21 @@ def update_user(request, user_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users(request):
-    users = CustomUser.objects.all()
-    serializer = CustomUserSerializer(users, many=True)
-    return Response(serializer.data)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                users = CustomUser.objects.all()
+                serializer = CustomUserSerializer(users, many=True)
+                return Response(serializer.data)
+
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
+
 
 
 
