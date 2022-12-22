@@ -26,7 +26,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\W_])',
                 message='El password debe tener al menos un número, una letra mayúscula, una letra minúscula y un signo de puntuación',
             ),
-            MinLengthValidator(8, 'El password debe tener al menos 8 caracteres'),
+            MinLengthValidator(13, 'El password debe tener al menos 13 caracteres'),
         ]
     )
 

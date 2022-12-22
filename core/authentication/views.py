@@ -16,6 +16,9 @@ from .messages.responses_error import LOGIN_CREDENTIALS_REQUIRED_ERROR, LOGIN_CR
 from django.core.mail import send_mail
 from django.conf import settings
 
+import secrets
+import string
+
 
 # Create your views here.
 class LoginView(GenericAPIView):
@@ -183,30 +186,44 @@ def change_password(request, user_id):
         return Response({"error": "No existe un usuario con ese id"}, status.HTTP_400_BAD_REQUEST)
 
 
+
 @api_view(['POST']) 
-def request_recovery_password(request):
+def recovery_password(request):
+    lowercase_letters = string.ascii_lowercase
+    uppercase_letters = string.ascii_uppercase
+    digits = string.digits
+    special_chars = '._-$#%?¿¡!' #string.punctuation
+    alphabet = lowercase_letters + uppercase_letters + digits + special_chars
+    pwd_length = 13
+
+    while True:
+        new_pwd = ''
+        for i in range(pwd_length):
+            new_pwd += ''.join(secrets.choice(alphabet))
+
+        if (any(char in special_chars for char in new_pwd) and sum(char in digits for char in new_pwd)>=1 and 
+            any(char in lowercase_letters for char in new_pwd) and any(char in uppercase_letters for char in new_pwd)):
+                break
+
     email = request.data.get("email", None)
-    # recovery_link = request.headers.get("recovery_link", None)
     if email is None or email == '': 
-        return Response({"error": "Por favor, introuzca su email"}, status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Por favor, introduzca su email"}, status.HTTP_400_BAD_REQUEST)
     try:
         user = CustomUser.objects.get(email=email)
-        # if user:        
-        message = "Se le han enviado las instrucciones a su correo electrónico para recuperar su contraseña. Debería recibirlo en un lapso de tiempo corto. Sino recibió correo electrónico alguno, por favor, asegurese de que haya ingresado su dirección de correo electrónico correctamente, también revise su carpeta de spam."
-        recovery_link = 'enlace_de_recuperacion_de_contraseña_aqui'
-        message_email = f"Para establecer una nueva contraseña, de click en el siguiente enlace: {recovery_link}"
+        message = "Se le ha enviado un correo electrónico en respuesta a su solicitud de recuperación de contraseña. Debería recibirlo en un lapso de tiempo corto. Asegurese de revisar su carpeta de spam."
+        message_email = f"Recibimos su solicitud para recuperar su contraseña.\nSu nueva contraseña es: {new_pwd}\nAhora puede iniciar sesión usando su nueva contraseña."
         try:    
             send_mail( 
-                'Recuperar contraseña',# 'Subject here',
+                'Recuperación de contraseña',# 'Subject here',
                 message_email,# 'Here is the message.',
                 settings.EMAIL_HOST_USER,# 'from@example.com',
                 [email],# ['to@example.com'],
                 fail_silently=False,
             )
-            token = Token.objects.get_or_create(user=user)
+            user.password = make_password(new_pwd)
+            user.save()
             serializer = UserSerializer(user, many=False)
             return Response({
-                "token": token[0].key,
                 "user": serializer.data,
                 "msg": message
             })
@@ -215,29 +232,3 @@ def request_recovery_password(request):
 
     except:
         return Response({"error":"El email no corresponde a ningún usuario registrado"}, status=400)
-
-
-
-@api_view(['PUT'])
-@permission_classes([IsAuthenticated])
-def recovery_password(request):
-    try:
-        token_request = request.headers.get("token", None)
-        new_password = request.data.get("new_password", None)
-        token = Token.objects.get(key=token_request)  
-        # if token: 
-        if new_password is None or new_password == '':
-            return Response({"error": "Por favor, introduzca su nueva contraseña"}, status.HTTP_400_BAD_REQUEST)
-        user = CustomUser.objects.filter(auth_token=token).first()
-        user.password = make_password(new_password)
-        user.save()
-        serializer = UserSerializer(user, many=False)
-        user.auth_token.delete()
-        logout(request)
-        return Response({
-            "user": serializer.data,
-            "msg": "Su password ha sido cambiado exitosamente"
-        })
-        # return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
-    except:
-        return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)   
