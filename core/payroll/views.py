@@ -7,30 +7,46 @@ from django.conf import settings
 from django.contrib.staticfiles.utils import get_files
 from django.contrib.staticfiles.storage import StaticFilesStorage
 import os
- 
+from .models import Payroll, CustomUser
+from authentication.serializers import CustomUserSerializer, UserSerializer
+from .serializers import PayrollSerializer
+from rest_framework import generics
+
+
 # Create your views here.
 @api_view(['POST']) 
 def payrolls_register(request):
+    s = StaticFilesStorage()
+    files = list(get_files(s, location='pdf_files/2022'))
+    for file in files:
+        pdf_filename = file.split('\\')[1] # "NOM1221_2022-01-01.pdf"
+        pdf_dataname = pdf_filename.split('_')
+        employee_data = pdf_dataname[0]
+        code_employee = employee_data.split('NOM')[1]
+        data_pdf = pdf_dataname[1]
+        date_pdf = data_pdf.split('.pdf')[0]
+            
+        user = CustomUser.objects.get(code_employee=code_employee)
+        Payroll.objects.create(
+            user = user,
+            payment_date = date_pdf,
+            payroll_filename = pdf_filename
+        )
+
+    return Response({
+        # "code_employee": code_employee,
+        # "user": serializer.data,
+        # "user_id": user.id,
+        # "date": date_pdf,
+        # "pdf_filename": pdf_filename
+        "msg": "Registros realizados"
+    })
+
+
+@api_view(['GET'])
+def get_payrolls(request):
+    payrolls = Payroll.objects.all()
+    serializer = PayrollSerializer(payrolls, many=True)
+    return Response(serializer.data)
+    
  
-        s = StaticFilesStorage()
-        files = list(get_files(s, location='pdf_files/2020'))
-
-        # file name with extension
-        # path = os.path.basename('/pdf_files/2020')
-        # file_name = os.path.basename('../pdf_files/2020/NOM1221_2020-01-01.pdf')
-        
-        # file name without extension
-        # print(os.path.splitext(file_name)[0])
-
-        # path='../pdf_files/2020/NOM1221_2020-01-01.pdf' 
-        # print(os.path.basename(path))
-
-        # path = settings.STATIC_URL
-        return Response({
-                # "ruta": os.path.splitext(file_name)[0]
-                # "ruta": settings.STATIC_URL
-                "ruta": files
-        })
-        # print(settings.STATIC_URL)
-
-# payrolls_register()
