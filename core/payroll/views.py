@@ -1,22 +1,20 @@
-# from django.shortcuts import render
-from rest_framework.decorators import api_view
-# from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
-
 from django.contrib.staticfiles.utils import get_files
 from django.contrib.staticfiles.storage import StaticFilesStorage
 import os
 from .models import Payroll, CustomUser
 from authentication.serializers import CustomUserSerializer, UserSerializer
 from .serializers import PayrollSerializer
-from rest_framework import generics
-
+from rest_framework.authtoken.models import Token
 from django.http import HttpResponse
 
 
 # Create your views here.
 @api_view(['POST']) 
+# @permission_classes([IsAuthenticated])
 def payrolls_register(request):
     s = StaticFilesStorage()
     files = list(get_files(s, location='pdf_files/2022'))
@@ -46,11 +44,42 @@ def payrolls_register(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_payrolls(request):
-    payrolls = Payroll.objects.all()
-    serializer = PayrollSerializer(payrolls, many=True)
-    return Response(serializer.data)
-    
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            year = request.data.get("year", None)
+            month = request.data.get("month", None)
+
+            if year is None and month is None:
+                return Response({"error":"Se requiere mes y/o año"}, status=400)
+            
+            if year is not None and month is not None:
+                if month >= 1 and month <=12:
+                    payrolls = Payroll.objects.filter(payment_date__year=year, payment_date__month=month, user=log_user.id)
+                    serializer = PayrollSerializer(payrolls, many=True)
+                    return Response({"payroll": serializer.data, "year": year, "month": month})
+                return Response({"error":"El mes no es válido"}, status=400)
+            
+            if year is not None and month is None:
+                payrolls = Payroll.objects.filter(payment_date__year=year, user=log_user.id)
+                serializer = PayrollSerializer(payrolls, many=True)
+                return Response({"payroll": serializer.data, "year": year})
+
+            if year is None and month is not None:
+                if month >= 1 and month <=12:
+                    payrolls = Payroll.objects.filter(payment_date__month=month, user=log_user.id)
+                    serializer = PayrollSerializer(payrolls, many=True)
+                    return Response({"payroll": serializer.data, "month": month})
+                return Response({"error":"El mes no es válido"}, status=400)
+
+        return Response({"error":"Token inexistente"}, status=400)   
+    return Response({"error":"Token no encontrado"}, status=400)   
+             
  
 def download_pdf(request, file_name):
         #s = StaticFilesStorage()
