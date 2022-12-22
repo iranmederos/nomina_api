@@ -6,7 +6,7 @@ class Roles(models.Model):
     rol_name = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.rol_name
+        return f"{self.id}-{self.rol_name}"
 
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=100, unique=True, null=True, blank=True)
