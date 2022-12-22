@@ -12,6 +12,8 @@ from authentication.serializers import CustomUserSerializer, UserSerializer
 from .serializers import PayrollSerializer
 from rest_framework import generics
 
+from django.http import HttpResponse
+
 
 # Create your views here.
 @api_view(['POST']) 
@@ -50,3 +52,22 @@ def get_payrolls(request):
     return Response(serializer.data)
     
  
+def download_pdf(request, file_name):
+        #s = StaticFilesStorage()
+        #file_url = s.url(f'pdf_files/{file_name}')
+        file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
+        with open(file_path, 'rb') as f:
+                file_content = f.read()
+        response = HttpResponse(file_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
+ 
+def detail_pdf(request, file_name):
+        #s = StaticFilesStorage()
+        #file_url = s.url(f'pdf_files/{file_name}')
+        file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
+        with open(file_path, 'rb') as f:
+                file_content = f.read()
+        response = HttpResponse(file_content, content_type='application/pdf')
+        #response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response
