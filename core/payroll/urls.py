@@ -6,5 +6,5 @@ urlpatterns = [
     path('payroll-register/', payrolls_register),
     path('get-payrolls/', get_payrolls),
     path('download/<str:file_name>/', download_pdf, name='download_pdf'),
-    path('detail_pdf/<str:file_name>/', download_pdf, name='download_pdf'),
+    path('detail_pdf/<str:file_name>/', detail_pdf, name='detail_pdf'),
 ]

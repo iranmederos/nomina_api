@@ -59,11 +59,9 @@ def get_payrolls(request):
                 return Response({"error":"Se requiere mes y/o año"}, status=400)
             
             if year is not None and month is not None:
-                if month >= 1 and month <=12:
                     payrolls = Payroll.objects.filter(payment_date__year=year, payment_date__month=month, user=log_user.id)
                     serializer = PayrollSerializer(payrolls, many=True)
                     return Response({"payroll": serializer.data, "year": year, "month": month})
-                return Response({"error":"El mes no es válido"}, status=400)
             
             if year is not None and month is None:
                 payrolls = Payroll.objects.filter(payment_date__year=year, user=log_user.id)
@@ -71,32 +69,42 @@ def get_payrolls(request):
                 return Response({"payroll": serializer.data, "year": year})
 
             if year is None and month is not None:
-                if month >= 1 and month <=12:
                     payrolls = Payroll.objects.filter(payment_date__month=month, user=log_user.id)
                     serializer = PayrollSerializer(payrolls, many=True)
                     return Response({"payroll": serializer.data, "month": month})
-                return Response({"error":"El mes no es válido"}, status=400)
 
         return Response({"error":"Token inexistente"}, status=400)   
     return Response({"error":"Token no encontrado"}, status=400)   
              
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_pdf(request):
+    #s = StaticFilesStorage()
+    #file_url = s.url(f'pdf_files/{file_name}')
+    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
+    with open(file_path, 'rb') as f:
+            file_content = f.read()
+    response = HttpResponse(file_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+    return response
  
-def download_pdf(request, file_name):
-        #s = StaticFilesStorage()
-        #file_url = s.url(f'pdf_files/{file_name}')
-        file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
-        with open(file_path, 'rb') as f:
-                file_content = f.read()
-        response = HttpResponse(file_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
- 
+
 def detail_pdf(request, file_name):
-        #s = StaticFilesStorage()
-        #file_url = s.url(f'pdf_files/{file_name}')
-        file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
-        with open(file_path, 'rb') as f:
-                file_content = f.read()
-        response = HttpResponse(file_content, content_type='application/pdf')
+    
+    #s = StaticFilesStorage()
+    #file_url = s.url(f'pdf_files/{file_name}')
+    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
+    with open(file_path, 'rb') as f:
+            file_content = f.read()
+    response = HttpResponse(file_content, content_type='application/pdf')
         #response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        return response
+    return response
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def detail_pdf(request):
+    file_name = request.data.get('file_name', None)
+    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
+    data = {'file_path': file_path}
+    return Response(data)

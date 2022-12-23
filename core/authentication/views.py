@@ -164,6 +164,7 @@ def update_user(request, user_id):
     except CustomUser.DoesNotExist:
         return Response({"error": "No existe un usuario con ese id"}, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users(request):
