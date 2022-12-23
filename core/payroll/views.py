@@ -77,34 +77,34 @@ def get_payrolls(request):
     return Response({"error":"Token no encontrado"}, status=400)   
              
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def download_pdf(request):
-    #s = StaticFilesStorage()
-    #file_url = s.url(f'pdf_files/{file_name}')
-    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
-    with open(file_path, 'rb') as f:
-            file_content = f.read()
-    response = HttpResponse(file_content, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-    return response
- 
-
-def detail_pdf(request, file_name):
+def download_payroll(request):
+    file_name = request.data.get('payroll_filename', None)
+    # date_pdf = file_name.split('_')[1].split('.pdf')[0]
+    # year_folder = date_pdf.split('-')[0]
     
-    #s = StaticFilesStorage()
-    #file_url = s.url(f'pdf_files/{file_name}')
-    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
-    with open(file_path, 'rb') as f:
-            file_content = f.read()
-    response = HttpResponse(file_content, content_type='application/pdf')
-        #response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-    return response
+    path = os.path.join(settings.STATIC_ROOT, 'pdf_files')
+    for directory_name, directory, files in os.walk(path):
+        # directory_name = directory_name.replace(str('C:\\Users\\HP\\Documents\\My_files\\LoopGK\\Syncronik_Internship\\projects\\nomina_app_resetpassword_updated\\nomina_app\\core\\staticfiles\\pdf_files' + '\\' + year_folder), str('fa.syncronik.com'+'/'+year_folder))
+        for file_ in files:
+            if file_ == file_name:
+                return Response({"file": str(directory_name + '/' + file_)}, status=200)
+    return Response({"msg": "Archivo no encontrado"}, status=400)
+    
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def detail_pdf(request):
-    file_name = request.data.get('file_name', None)
-    file_path = os.path.join(settings.STATIC_ROOT, 'pdf_files', file_name)
-    data = {'file_path': file_path}
-    return Response(data)
+def detail_payroll(request):
+    file_name = request.data.get('payroll_filename', None)
+    # date_pdf = file_name.split('_')[1].split('.pdf')[0]
+    # year_folder = date_pdf.split('-')[0]
+    
+    path = os.path.join(settings.STATIC_ROOT, 'pdf_files')
+    for directory_name, directory, files in os.walk(path):
+        # directory_name = directory_name.replace(str('C:\\Users\\HP\\Documents\\My_files\\LoopGK\\Syncronik_Internship\\projects\\nomina_app_resetpassword_updated\\nomina_app\\core\\staticfiles\\pdf_files' + '\\' + year_folder), str('fa.syncronik.com'+'/'+year_folder))
+        for file_ in files:
+            if file_ == file_name:
+                return Response({"file": str(directory_name + '/' + file_)}, status=200)
+    return Response({"msg": "Archivo no encontrado"}, status=400)
+    
