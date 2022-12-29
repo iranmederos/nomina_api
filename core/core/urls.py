@@ -21,4 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # Api routes
     path('api/auth/', include('authentication.urls')),
+    #API payroll
+    path('api/payroll/', include('payroll.urls')),
 ]

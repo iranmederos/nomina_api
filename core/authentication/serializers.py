@@ -1,12 +1,18 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, Roles
 from django.core.validators import RegexValidator, MinLengthValidator
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    rol = serializers.SerializerMethodField('get_rol')
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol')
 
+    def get_rol(self, CustomUser):
+        return {
+            "rol_id": CustomUser.rol.id,
+            "rol_name": CustomUser.rol.rol_name
+        }
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,7 +32,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\W_])',
                 message='El password debe tener al menos un número, una letra mayúscula, una letra minúscula y un signo de puntuación',
             ),
-            MinLengthValidator(8, 'El password debe tener al menos 8 caracteres'),
+            MinLengthValidator(13, 'El password debe tener al menos 13 caracteres'),
         ]
     )
 
@@ -35,7 +41,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('id', 'code_employee', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email', 'status', 'date_start', 'rol', 'password')
 
     def create(self, validated_data):
-        #tomar del modelo roles el campo de usuario comun
+        # user_rol = Roles.objects.get(id=validated_data['rol'])
         user = CustomUser.objects.create_user(
             username = validated_data['code_employee'],
             code_employee = validated_data['code_employee'],
@@ -45,7 +51,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name = validated_data['first_name'],
             last_name = validated_data['last_name'],
             email = validated_data['email'],
-            password = validated_data['password'])
+            password = validated_data['password'],
+            rol = validated_data['rol'],#user_rol,
+            date_start = validated_data['date_start'])
         return user
 
 
@@ -53,6 +61,12 @@ class UserSerializerUpdate(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email']
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Roles
+        fields = ('id', 'rol_name')
 
 
 # class UpdateSerializer(serializers.ModelSerializer):

@@ -8,13 +8,16 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
-from .models import CustomUser
-from .serializers import UserSerializer, CustomUserSerializer, RegisterSerializer, UserSerializerUpdate
+from .models import CustomUser, Roles
+from .serializers import UserSerializer, CustomUserSerializer, RegisterSerializer, UserSerializerUpdate, RoleSerializer
 from .messages.responses_ok import LOGIN_OK, SIGNUP_OK
 from .messages.responses_error import LOGIN_CREDENTIALS_REQUIRED_ERROR, LOGIN_CREDENTIALS_ERROR
 
 from django.core.mail import send_mail
 from django.conf import settings
+
+import secrets
+import string
 
 
 # Create your views here.
@@ -80,7 +83,8 @@ class LoginView(GenericAPIView):
         else:
             return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST) 
 
-# @permission_classes([IsAuthenticated])
+
+@permission_classes([IsAuthenticated])
 class LogoutView(GenericAPIView):
     def post(self, request):
         try:
@@ -96,58 +100,99 @@ class LogoutView(GenericAPIView):
             return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
 
 
-
+@permission_classes([IsAuthenticated])
 class SignUpView(GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response(
-            {
-                "user": UserSerializer(user, context = self.get_serializer_context()).data,
-                "message": SIGNUP_OK
-            },
-        )
+        token_request = request.headers.get("token", None)
+        if token_request is not None:
+            # token = Token.objects.get(key=token_request)
+            token = Token.objects.filter(key=token_request).first()
+            if token:
+                log_user = CustomUser.objects.filter(auth_token=token).first()
+                if log_user.rol.id == 1:
+                    serializer = self.get_serializer(data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    user = serializer.save()
+                    return Response(
+                        {
+                            "user": UserSerializer(user, context = self.get_serializer_context()).data,
+                            "message": SIGNUP_OK
+                        },
+                    )
+                return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+        return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)   
 
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def disable_user(request, user_id):
-    try:
-        user = CustomUser.objects.get(id=user_id)
-        user.status = False
-        UserSerializer(user, many=False)
-        user.save()
-        data = {
-            "message": "Usuario deshabilitado exitosamente",
-        }
-        return Response(data, status = 200)
-    except:
-        return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                try:
+                    user = CustomUser.objects.get(id=user_id)
+                    user.status = False
+                    UserSerializer(user, many=False)
+                    user.save()
+                    data = {
+                        "message": "Usuario deshabilitado exitosamente",
+                    }
+                    return Response(data, status = 200)
+                except:
+                    return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
 
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_user(request, user_id):
-    try:
-        user = CustomUser.objects.get(id=user_id)
-        serializer = UserSerializerUpdate(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except CustomUser.DoesNotExist:
-        return Response({"error": "No existe un usuario con ese id"}, status=status.HTTP_400_BAD_REQUEST)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                try:
+                    user = CustomUser.objects.get(id=user_id)
+                    serializer = UserSerializerUpdate(user, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                except CustomUser.DoesNotExist:
+                    return Response({"error": "No existe ningún usuario con ese ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users(request):
-    users = CustomUser.objects.all()
-    serializer = CustomUserSerializer(users, many=True)
-    return Response(serializer.data)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                users = CustomUser.objects.all()
+                serializer = CustomUserSerializer(users, many=True)
+                return Response(serializer.data)
 
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
 
 
 @api_view(['PUT'])
@@ -184,29 +229,42 @@ def change_password(request, user_id):
 
 
 @api_view(['POST']) 
-def request_recovery_password(request):
+def recovery_password(request):
+    lowercase_letters = string.ascii_lowercase
+    uppercase_letters = string.ascii_uppercase
+    digits = string.digits
+    special_chars = '._-$#%?¿¡!' #string.punctuation
+    alphabet = lowercase_letters + uppercase_letters + digits + special_chars
+    pwd_length = 13
+
+    while True:
+        new_pwd = ''
+        for i in range(pwd_length):
+            new_pwd += ''.join(secrets.choice(alphabet))
+
+        if (any(char in special_chars for char in new_pwd) and sum(char in digits for char in new_pwd)>=1 and 
+            any(char in lowercase_letters for char in new_pwd) and any(char in uppercase_letters for char in new_pwd)):
+                break
+
     email = request.data.get("email", None)
-    # recovery_link = request.headers.get("recovery_link", None)
     if email is None or email == '': 
-        return Response({"error": "Por favor, introuzca su email"}, status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Por favor, introduzca su email"}, status.HTTP_400_BAD_REQUEST)
     try:
         user = CustomUser.objects.get(email=email)
-        # if user:        
-        message = "Se le han enviado las instrucciones a su correo electrónico para recuperar su contraseña. Debería recibirlo en un lapso de tiempo corto. Sino recibió correo electrónico alguno, por favor, asegurese de que haya ingresado su dirección de correo electrónico correctamente, también revise su carpeta de spam."
-        recovery_link = 'enlace_de_recuperacion_de_contraseña_aqui'
-        message_email = f"Para establecer una nueva contraseña, de click en el siguiente enlace: {recovery_link}"
+        message = "Se le ha enviado un correo electrónico en respuesta a su solicitud de recuperación de contraseña. Debería recibirlo en un lapso de tiempo corto. Asegurese de revisar su carpeta de spam."
+        message_email = f"Recibimos su solicitud para recuperar su contraseña.\nSu nueva contraseña es: {new_pwd}\nAhora puede iniciar sesión usando su nueva contraseña."
         try:    
             send_mail( 
-                'Recuperar contraseña',# 'Subject here',
+                'Recuperación de contraseña',# 'Subject here',
                 message_email,# 'Here is the message.',
                 settings.EMAIL_HOST_USER,# 'from@example.com',
                 [email],# ['to@example.com'],
                 fail_silently=False,
             )
-            token = Token.objects.get_or_create(user=user)
+            user.password = make_password(new_pwd)
+            user.save()
             serializer = UserSerializer(user, many=False)
             return Response({
-                "token": token[0].key,
                 "user": serializer.data,
                 "msg": message
             })
@@ -217,27 +275,34 @@ def request_recovery_password(request):
         return Response({"error":"El email no corresponde a ningún usuario registrado"}, status=400)
 
 
+@api_view(['POST'])
+def create_role(request):
+    role_name = request.data.get("role_name", None)
+    role = Roles.objects.create(
+        rol_name = role_name
+    )
+    serializer = RoleSerializer(role, many=False)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_roles(request):
+    roles = Roles.objects.all()
+    serializer = RoleSerializer(roles, many=True)
+    return Response(serializer.data)
+
 
 @api_view(['PUT'])
-@permission_classes([IsAuthenticated])
-def recovery_password(request):
+def enable_user(request, user_id):
     try:
-        token_request = request.headers.get("token", None)
-        new_password = request.data.get("new_password", None)
-        token = Token.objects.get(key=token_request)  
-        # if token: 
-        if new_password is None or new_password == '':
-            return Response({"error": "Por favor, introduzca su nueva contraseña"}, status.HTTP_400_BAD_REQUEST)
-        user = CustomUser.objects.filter(auth_token=token).first()
-        user.password = make_password(new_password)
+        user = CustomUser.objects.get(id=user_id)
+        user.status = True
+        serializer = CustomUserSerializer(user, many=False)
         user.save()
-        serializer = UserSerializer(user, many=False)
-        user.auth_token.delete()
-        logout(request)
-        return Response({
+        data = {
             "user": serializer.data,
-            "msg": "Su password ha sido cambiado exitosamente"
-        })
-        # return Response({"error":"El usuario no existe"}, status=status.HTTP_400_BAD_REQUEST)   
+            "message": "Usuario habilitado exitosamente",
+        }
+        return Response(data, status = 200)
     except:
-        return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)   
+        return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)
