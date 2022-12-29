@@ -63,6 +63,12 @@ class UserSerializerUpdate(serializers.ModelSerializer):
         fields = ['id', 'identification_card', 'rfc_equivalet', 'nss', 'first_name', 'last_name', 'email']
 
 
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Roles
+        fields = ('id', 'rol_name')
+
+
 # class UpdateSerializer(serializers.ModelSerializer):
 #     # nss = serializers.CharField(max_length=20, unique=True, null=False, allow_blank=False)
 #     class Meta:

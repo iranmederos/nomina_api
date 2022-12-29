@@ -8,8 +8,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
-from .models import CustomUser
-from .serializers import UserSerializer, CustomUserSerializer, RegisterSerializer, UserSerializerUpdate
+from .models import CustomUser, Roles
+from .serializers import UserSerializer, CustomUserSerializer, RegisterSerializer, UserSerializerUpdate, RoleSerializer
 from .messages.responses_ok import LOGIN_OK, SIGNUP_OK
 from .messages.responses_error import LOGIN_CREDENTIALS_REQUIRED_ERROR, LOGIN_CREDENTIALS_ERROR
 
@@ -83,6 +83,7 @@ class LoginView(GenericAPIView):
         else:
             return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST) 
 
+
 @permission_classes([IsAuthenticated])
 class LogoutView(GenericAPIView):
     def post(self, request):
@@ -153,16 +154,26 @@ def disable_user(request, user_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_user(request, user_id):
-    try:
-        user = CustomUser.objects.get(id=user_id)
-        serializer = UserSerializerUpdate(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except CustomUser.DoesNotExist:
-        return Response({"error": "No existe un usuario con ese id"}, status=status.HTTP_400_BAD_REQUEST)
+    token_request = request.headers.get("token", None)
+    if token_request is not None:
+        # token = Token.objects.get(key=token_request)
+        token = Token.objects.filter(key=token_request).first()
+        if token:
+            log_user = CustomUser.objects.filter(auth_token=token).first()
+            if log_user.rol.id == 1:
+                try:
+                    user = CustomUser.objects.get(id=user_id)
+                    serializer = UserSerializerUpdate(user, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                except CustomUser.DoesNotExist:
+                    return Response({"error": "No existe ningún usuario con ese ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
+        return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
+    return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
 
 
 @api_view(['GET'])
@@ -182,8 +193,6 @@ def get_users(request):
             return Response({"error":"Solo el usuario administrador puede acceder"}, status=status.HTTP_400_BAD_REQUEST) 
         return Response({"error":"Token inexistente"}, status=status.HTTP_400_BAD_REQUEST)   
     return Response({"error":"Token no encontrado"}, status=status.HTTP_400_BAD_REQUEST)  
-
-
 
 
 @api_view(['PUT'])
@@ -217,7 +226,6 @@ def change_password(request, user_id):
                 }, status.HTTP_400_BAD_REQUEST)
     except: 
         return Response({"error": "No existe un usuario con ese id"}, status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['POST']) 
@@ -265,3 +273,36 @@ def recovery_password(request):
 
     except:
         return Response({"error":"El email no corresponde a ningún usuario registrado"}, status=400)
+
+
+@api_view(['POST'])
+def create_role(request):
+    role_name = request.data.get("role_name", None)
+    role = Roles.objects.create(
+        rol_name = role_name
+    )
+    serializer = RoleSerializer(role, many=False)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_roles(request):
+    roles = Roles.objects.all()
+    serializer = RoleSerializer(roles, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['PUT'])
+def enable_user(request, user_id):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        user.status = True
+        serializer = CustomUserSerializer(user, many=False)
+        user.save()
+        data = {
+            "user": serializer.data,
+            "message": "Usuario habilitado exitosamente",
+        }
+        return Response(data, status = 200)
+    except:
+        return Response({"error": "No existe ningun usuario con ese ID"}, status = 404)

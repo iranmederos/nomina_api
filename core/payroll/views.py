@@ -17,7 +17,7 @@ from django.http import HttpResponse
 # @permission_classes([IsAuthenticated])
 def payrolls_register(request):
     s = StaticFilesStorage()
-    files = list(get_files(s, location='pdf_files/2022'))
+    files = list(get_files(s, location='pdf_files/2021'))
     for file in files:
         pdf_filename = file.split('\\')[1] # "NOM1221_2022-01-01.pdf"
         pdf_dataname = pdf_filename.split('_')
