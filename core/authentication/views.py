@@ -35,51 +35,57 @@ class LoginView(GenericAPIView):
             if code_employee is None or password is None:
                 return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST)
             else: 
-                user = authenticate(code_employee = code_employee, password = password)
-                if user is not None and user.status == True:#user.is_active:
-                    token = Token.objects.get_or_create(user=user)
-                    if token:
+                try:
+                    user = authenticate(code_employee = code_employee, password = password)
+                    if user is not None and user.status == True:#user.is_active:
+                        token = Token.objects.get_or_create(user=user)
+                        if token:
+                            return Response( {
+                                "token": token[0].key,
+                                "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
+                                "message": LOGIN_OK
+                            }, status=status.HTTP_200_OK)
+                        token.delete()
+                        token = Token.objects.create(user=user)
                         return Response( {
                             "token": token[0].key,
                             "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
                             "message": LOGIN_OK
                         }, status=status.HTTP_200_OK)
-                    token.delete()
-                    token = Token.objects.create(user=user)
-                    return Response( {
-                        "token": token[0].key,
-                        "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
-                        "message": LOGIN_OK
-                    }, status=status.HTTP_200_OK)
-    
-                else:
-                    return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
+        
+                    else:
+                        return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
+                except:
+                        return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
 
         elif code_employee is None and email is not None:
             if email is None or password is None:
                 return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST)
-            else: 
-                user = CustomUser.objects.get(email=email)
-                user = authenticate(code_employee = user.code_employee, password = password)
-                if user is not None and user.status == True:#user.is_active:
-                    token = Token.objects.get_or_create(user=user)
-                    if token:
+            else:
+                try:
+                    user = CustomUser.objects.get(email=email)
+                    user = authenticate(code_employee = user.code_employee, password = password)
+                    if user is not None and user.status == True:#user.is_active:
+                        token = Token.objects.get_or_create(user=user)
+                        if token:
+                            return Response( {
+                                "token": token[0].key,
+                                "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
+                                "message": LOGIN_OK
+                            }, status=status.HTTP_200_OK)
+                        token.delete()
+                        token = Token.objects.create(user=user)
                         return Response( {
                             "token": token[0].key,
                             "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
                             "message": LOGIN_OK
                         }, status=status.HTTP_200_OK)
-                    token.delete()
-                    token = Token.objects.create(user=user)
-                    return Response( {
-                        "token": token[0].key,
-                        "user": CustomUserSerializer(user, context = self.get_serializer_context()).data,
-                        "message": LOGIN_OK
-                    }, status=status.HTTP_200_OK)
-    
-                else:
-                    return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
-            
+        
+                    else:
+                        return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
+                except: 
+                        return Response(LOGIN_CREDENTIALS_ERROR, status=status.HTTP_401_UNAUTHORIZED)
+
         else:
             return Response(LOGIN_CREDENTIALS_REQUIRED_ERROR, status=status.HTTP_400_BAD_REQUEST) 
 

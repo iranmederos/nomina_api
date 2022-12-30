@@ -11,7 +11,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def get_rol(self, CustomUser):
         return {
             "rol_id": CustomUser.rol.id,
-            "rol_name": CustomUser.rol.rol_name
+            "rol_name": CustomUser.rol.rol_name  
         }
 
 class UserSerializer(serializers.ModelSerializer):

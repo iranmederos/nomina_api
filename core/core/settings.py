@@ -29,11 +29,11 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
-
+DEBUG = False#os.getenv('DEBUG', '0').lower() in ['true', 't', '1']
+      
+ALLOWED_HOSTS = ['*'] #os.getenv('ALLOWED_HOSTS').split(' ')# 
+ 
+ 
 # Application definition
 
 INSTALLED_APPS = [
@@ -73,9 +73,9 @@ REST_FRAMEWORK = {
 }
 
 EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = 'smtp.ionos.mx'# os.getenv('EMAIL_HOST') #'smtp.gmail.com'
-EMAIL_HOST_USER = 'roman.martinez@syncronik.team' # os.getenv('EMAIL_HOST_USER') #your email-id
-EMAIL_HOST_PASSWORD = '9PhaZ852kUG.cQw' # os.getenv('EMAIL_HOST_PASSWORD') #your password
+EMAIL_HOST = os.getenv('EMAIL_HOST') #'smtp.ionos.mx' #'smtp.gmail.com'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') #'roman.martinez@syncronik.team' #your email-id
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')#'9PhaZ852kUG.cQw' #your password
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
