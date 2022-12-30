@@ -18,12 +18,12 @@ class Command(BaseCommand):
                 code_employee=1221,
                 username='1221', 
                 password='1234',
-                identification_card='VGO134ZG10JH39JVGUK7',
-                rfc_equivalet='91NVAI9YUGGXDDA5',
-                nss='65HJ6041RDKKJHKOVF94',
+                identification_card='VGO134ZG10JH39JVGaUK7',
+                rfc_equivalet='91NVAI9YsUGGXDDA5',
+                nss='65HJ6041RDKKJHKdOVF94',
                 first_name='Yuridia',
                 last_name='Salazar',
-                email='iran.mederos@syncronik.team',
+                email='iran.medeross@syncronik.team',
                 date_start='2021-01-01',
                 rol=role
             )
