@@ -15,8 +15,8 @@ class Command(BaseCommand):
             )
  
             CustomUser.objects.create_superuser(
-                code_employee='1221',
-                username=1221, 
+                code_employee='5555',
+                username=5555, 
                 password='1234',
                 identification_card='VGO134ZG10JH39JVGUK7',
                 rfc_equivalet='91NVAI9YUGGXDDA5',
