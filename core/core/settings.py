@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #Applications
-    'authentication',
-    'payroll',
+    'core.authentication',
+    'core.payroll',
     #django external apps
     'rest_framework',
     'rest_framework.authtoken'
